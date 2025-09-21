@@ -28,7 +28,9 @@ You can get something working with the standard library, but as requirements gro
 * [Using with encoding/json / validator](#using-with-encodingjson--validator)
 * [JSON Schema export / OpenAPI import](#json-schema-export--openapi-import)
 * [Webhook examples (HTTP / Kubernetes)](#webhook-examples-http--kubernetes)
+* [Installation](#installation)
 * [Quick start](#quick-start)
+* [Quick decisions](#quick-decisions-build-vs-bind--preserve)
 * [Streaming (safe for huge arrays)](#streaming-safe-for-huge-arrays)
 * [Enforcement (duplicate keys, depth, size limits)](#enforcement-duplicate-keys-depth-size-limits)
 * [WithMeta / Presence (distinguishing missing/null/default)](#withmeta--presence-distinguishing-missingnulldefault)
@@ -241,6 +243,16 @@ Kubernetes integration details (unknown/list-type/int-or-string, etc.) are in `d
 
 ---
 
+## Installation
+
+```bash
+go get github.com/reoring/goskema
+# v0 series (recommended)
+go get github.com/reoring/goskema@v0
+```
+
+---
+
 ## Quick start
 
 ```go
@@ -275,6 +287,17 @@ More examples: `docs/user-guide.md`.
 
 * Sample: `sample-projects/user-api`
 * Representative tests: `dsl/zod_basics_test.go`, `dsl/codec_zod_usecases_test.go`
+
+---
+
+## Quick decisions (Build vs Bind / Preserve)
+
+- Build vs Bind:
+  - Use `Object().Build/MustBuild` for untyped or map-based usage.
+  - Use `ObjectOf[T]().Bind/MustBind` to project into Go type T (preferred for application code).
+- Preserve encoding:
+  - Need to distinguish missing/null/default? Use `ParseFromWithMeta` and encode with `EncodePreservingObject` or `EncodePreservingArray`.
+  - `EncodeWithMode(..., EncodePreserve)` requires presence metadata; without it you’ll get `ErrEncodePreserveRequiresPresence`. Prefer the WithMeta + EncodePreserving* path.
 
 ---
 
@@ -519,6 +542,7 @@ cd benchmarks/compare && go test -bench . -benchmem
 
 * v0 allows necessary breaking changes while we refine semantics. When changes occur, document rationale and migration in `CHANGELOG.md` and `docs/adr/`.
 * Minimum supported Go version follows `go.mod` (currently Go 1.25.1). CI runs tests with `-race` continuously.
+* Rationale: target recent Go versions for performance and `encoding/json/v2` integration; a smaller support window reduces maintenance cost.
 
 ---
 

@@ -30,7 +30,9 @@
 * [encoding/json / validator と使い分け](#encodingjson--validator-と使い分け要点)
 * [JSON Schema エクスポート / OpenAPI 取り込み](#json-schema-エクスポート--openapi-取り込み)
 * [Webhook 実装例（HTTP / Kubernetes）](#webhook-実装例http--kubernetes)
+* [インストール](#インストール)
 * [クイックスタート](#クイックスタート)
+* [クイック決定表（Build vs Bind / Preserve）](#クイック決定表build-vs-bind--preserve)
 * [ストリーミング（巨大配列を安全に）](#ストリーミング巨大配列を安全に)
 * [Enforcement（重複キー・深さ・サイズ制限）](#enforcement重複キーデプスサイズ制限)
 * [WithMeta / Presence（欠落・null・default の見分け方）](#withmeta--presence欠落nulldefault-の見分け方)
@@ -293,6 +295,17 @@ func main() {
 
 ---
 
+## クイック決定表（Build vs Bind / Preserve）
+
+- Build と Bind の使い分け
+  - `Object().Build/MustBuild`: 型を決めず map ベースで使いたいとき。
+  - `ObjectOf[T]().Bind/MustBind`: Go の型 `T` に射影したいとき（アプリコードではこちらが基本）。
+- Preserve エンコードの使い分け
+  - 欠落/null/default を区別したい場合は、`ParseFromWithMeta` を使い presence を収集し、`EncodePreservingObject` / `EncodePreservingArray` で出力。
+  - `EncodeWithMode(..., EncodePreserve)` は presence メタが必須。未収集だと `ErrEncodePreserveRequiresPresence`。実務上は WithMeta + EncodePreserving* を推奨。
+
+---
+
 ## ストリーミング（巨大配列を安全に）
 
 巨大配列を“丸ごと展開せずに”1件ずつ検証・投影。`ParseFrom`/`StreamParse` が **Source 駆動で段階検証**します。
@@ -537,6 +550,7 @@ cd benchmarks/compare && go test -bench . -benchmem
 
 * v0 系は仕様磨き期間として、必要な破壊的変更を認めます。変更時は **`CHANGELOG.md` と `docs/adr/`** に根拠と移行ガイドを記載。
 * 最小サポート Go バージョンは `go.mod` に準拠（現時点: Go 1.25.1）。CI は `-race` を含むテストを継続実行。
+* 理由: 性能面と `encoding/json/v2` 連携を見据え、メンテナンスコストを抑えるため新しめの Go を対象にしています。
 
 ---
 
