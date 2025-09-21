@@ -1,0 +1,68 @@
+# Go build artifacts
+bin/
+build/
+dist/
+out/
+tmp/
+
+# Compiled binaries and objects
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.a
+*.test
+
+# Coverage and profiling
+coverage/
+cover.out
+*.cover
+*.cov
+profile.out
+cpu.pprof
+mem.pprof
+block.pprof
+mutex.pprof
+trace.out
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+*.old
+
+# Caches
+.cache/
+.gocache/
+.gocoverage/
+.godoc/
+.go-build/
+.golintcache
+
+# Dependencies (optional; remove if you commit vendor)
+vendor/
+
+# Editor and IDE settings
+.vscode/
+.idea/
+*.iml
+*.code-workspace
+.fleet/
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.*
+.envrc
+
+# Project-specific conveniences
+examples/**/bin/
+examples/**/dist/
+scripts/bin/
+
+.cursor
+refs

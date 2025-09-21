@@ -1,0 +1,12 @@
+apiVersion: example.com/v1
+kind: Widget
+metadata:
+  name: invalid-widget
+  namespace: default
+spec:
+  # size is missing (required field)
+  replicas: 15  # exceeds maximum (10)
+  config:
+    timeout: "invalid-timeout"  # doesn't match pattern
+    retries: 10  # exceeds maximum (5)
+    unknown_field: "this should be rejected"  # additionalProperties: false

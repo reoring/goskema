@@ -1,0 +1,48 @@
+{
+  "openAPIV3Schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "spec": {
+        "type": "object",
+        "properties": {
+          "inhibitRules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "equal": { "type": "array", "items": { "type": "string" } },
+                "sourceMatch": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": { "type": "string" },
+                      "value": { "type": "string" },
+                      "regex": { "type": "boolean" }
+                    },
+                    "required": ["name"]
+                  }
+                },
+                "targetMatch": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": { "type": "string" },
+                      "value": { "type": "string" },
+                      "regex": { "type": "boolean" }
+                    },
+                    "required": ["name"]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+

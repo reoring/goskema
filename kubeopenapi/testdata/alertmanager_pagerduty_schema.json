@@ -1,0 +1,29 @@
+{
+  "openAPIV3Schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "receivers": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "pagerdutyConfigs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "routingKey": { "type": "string" },
+                  "sendResolved": { "type": "boolean" }
+                },
+                "required": ["routingKey"]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+

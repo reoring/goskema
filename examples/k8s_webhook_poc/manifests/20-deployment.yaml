@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kweb-poc
+  namespace: goskema-webhook-poc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kweb-poc
+  template:
+    metadata:
+      labels:
+        app: kweb-poc
+    spec:
+      serviceAccountName: kweb-poc
+      containers:
+        - name: server
+          image: ghcr.io/your-org/goskema-kweb-poc:dev
+          imagePullPolicy: IfNotPresent
+          args:
+            - 
+          env:
+            - name: KWEB_ADDR
+              value: ":8443"
+            - name: KWEB_CRD_FILE
+              value: "/etc/kweb/crd.yaml"
+            - name: KWEB_CRD_KIND
+              value: "Widget"
+            - name: KWEB_TLS_CERT_FILE
+              value: "/tls/tls.crt"
+            - name: KWEB_TLS_KEY_FILE
+              value: "/tls/tls.key"
+          ports:
+            - name: https
+              containerPort: 8443
+          volumeMounts:
+            - name: tls
+              mountPath: /tls
+              readOnly: true
+            - name: crd
+              mountPath: /etc/kweb
+              readOnly: true
+      volumes:
+        - name: tls
+          secret:
+            secretName: kweb-poc-tls
+        - name: crd
+          configMap:
+            name: kweb-poc-crd
+
+

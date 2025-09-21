@@ -1,0 +1,11 @@
+apiVersion: example.com/v1
+kind: Widget
+metadata:
+  name: my-widget
+  namespace: default
+spec:
+  size: medium
+  replicas: 3
+  config:
+    timeout: "30s"
+    retries: 2

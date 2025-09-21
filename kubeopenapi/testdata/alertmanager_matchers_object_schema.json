@@ -1,0 +1,20 @@
+{
+  "openAPIV3Schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "matchers": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "value": { "type": "string" },
+            "regex": { "type": "boolean" }
+          },
+          "required": ["name", "value"]
+        }
+      }
+    }
+  }
+}

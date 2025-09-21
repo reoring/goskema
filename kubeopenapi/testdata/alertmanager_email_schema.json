@@ -1,0 +1,29 @@
+{
+  "openAPIV3Schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "receivers": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "emailConfigs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "to": { "type": "string" },
+                  "sendResolved": { "type": "boolean" }
+                },
+                "required": ["to"]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+

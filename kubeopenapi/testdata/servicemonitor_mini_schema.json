@@ -1,0 +1,21 @@
+{
+  "openAPIV3Schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "labels": {
+        "type": "object",
+        "additionalProperties": { "type": "string" }
+      },
+      "targets": {
+        "type": "array",
+        "items": { "type": "string" },
+        "x-kubernetes-list-type": "set"
+      },
+      "sampleLimit": { "x-kubernetes-int-or-string": true }
+    },
+    "required": ["labels", "targets", "sampleLimit"]
+  }
+}
+
+

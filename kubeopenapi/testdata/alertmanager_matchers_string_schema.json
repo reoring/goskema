@@ -1,0 +1,12 @@
+{
+  "openAPIV3Schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "matchers": {
+        "type": "array",
+        "items": { "type": "string" }
+      }
+    }
+  }
+}

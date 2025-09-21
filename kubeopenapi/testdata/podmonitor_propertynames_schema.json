@@ -1,0 +1,14 @@
+{
+  "openAPIV3Schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "labels": {
+        "type": "object",
+        "propertyNames": { "pattern": "^pm-" },
+        "additionalProperties": { "type": "string" }
+      }
+    },
+    "required": ["labels"]
+  }
+}

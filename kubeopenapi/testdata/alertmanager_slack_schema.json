@@ -1,0 +1,37 @@
+{
+  "openAPIV3Schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "receivers": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "slackConfigs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "channel": { "type": "string" },
+                  "apiURL": {
+                    "type": "object",
+                    "properties": {
+                      "key": { "type": "string" },
+                      "name": { "type": "string" },
+                      "optional": { "type": "boolean" }
+                    },
+                    "required": ["key"]
+                  }
+                },
+                "required": ["channel", "apiURL"]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+

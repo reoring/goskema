@@ -1,0 +1,40 @@
+{
+  "openAPIV3Schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "route": {
+        "type": "object",
+        "properties": {
+          "routes": {
+            "type": "array",
+            "x-kubernetes-list-type": "map",
+            "x-kubernetes-list-map-keys": ["receiver"],
+            "items": {
+              "type": "object",
+              "properties": {
+                "receiver": { "type": "string" },
+                "routes": {
+                  "type": "array",
+                  "x-kubernetes-list-type": "map",
+                  "x-kubernetes-list-map-keys": ["receiver"],
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "receiver": { "type": "string" }
+                    },
+                    "required": ["receiver"]
+                  }
+                }
+              },
+              "required": ["receiver"]
+            }
+          }
+        }
+      }
+    },
+    "required": ["route"]
+  }
+}
+
+

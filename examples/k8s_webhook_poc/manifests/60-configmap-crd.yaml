@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kweb-poc-crd
+  namespace: goskema-webhook-poc
+data:
+  crd.yaml: |
+    # Embedded CRD used by the webhook to import schema at startup
+    # You can replace this with your actual CRD bundle
+    {{- /* Copy of examples/k8s_webhook_poc/crd.yaml could be templated by kustomize/helm */ -}}
+

@@ -1,0 +1,48 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: alertmanagers.monitoring.coreos.com
+spec:
+  group: monitoring.coreos.com
+  names:
+    kind: Alertmanager
+    plural: alertmanagers
+    singular: alertmanager
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                route:
+                  type: object
+                  properties:
+                    receiver:
+                      type: string
+                    routes:
+                      type: array
+                      x-kubernetes-list-type: map
+                      x-kubernetes-list-map-keys:
+                        - receiver
+                      items:
+                        type: object
+                        properties:
+                          receiver:
+                            type: string
+                          routes:
+                            type: array
+                            x-kubernetes-list-type: map
+                            x-kubernetes-list-map-keys:
+                              - receiver
+                            items:
+                              type: object
+                              properties:
+                                receiver:
+                                  type: string
+

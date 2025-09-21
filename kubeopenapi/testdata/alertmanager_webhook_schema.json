@@ -1,0 +1,29 @@
+{
+  "openAPIV3Schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "receivers": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "webhookConfigs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "url": { "type": "string" },
+                  "sendResolved": { "type": "boolean" }
+                },
+                "required": ["url"]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+

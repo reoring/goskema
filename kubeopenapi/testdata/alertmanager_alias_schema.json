@@ -1,0 +1,20 @@
+{
+  "openAPIV3Schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "receivers": {
+        "type": "array",
+        "x-kubernetes-list-type": "map",
+        "x-kubernetes-list-map-keys": ["name"],
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" }
+          },
+          "required": ["name"]
+        }
+      }
+    }
+  }
+}

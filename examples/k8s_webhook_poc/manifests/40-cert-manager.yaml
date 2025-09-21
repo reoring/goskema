@@ -1,0 +1,30 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: kweb-selfsigned
+  namespace: goskema-webhook-poc
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: kweb-poc
+  namespace: goskema-webhook-poc
+spec:
+  secretName: kweb-poc-tls
+  duration: 2160h # 90d
+  renewBefore: 360h # 15d
+  subject:
+    organizationalUnits:
+      - goskema
+  commonName: kweb-poc.goskema-webhook-poc.svc
+  dnsNames:
+    - kweb-poc.goskema-webhook-poc.svc
+    - kweb-poc.goskema-webhook-poc.svc.cluster.local
+  issuerRef:
+    name: kweb-selfsigned
+    kind: Issuer
+
+
