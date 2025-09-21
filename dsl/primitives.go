@@ -538,23 +538,13 @@ func (s uintAsSchema[T]) Parse(ctx context.Context, v any) (T, error) {
 		var zero T
 		return zero, err
 	}
-	// json.Number has no Uint64, so parse as float -> check range/integer-ness
-	// Prefer strconv.ParseFloat then cast, rejecting negatives and fractions
-	f64, perr := strconv.ParseFloat(num.String(), 64)
+	// Use ParseUint to avoid float precision/overflow pitfalls and reject negatives/fractions
+	u64, perr := strconv.ParseUint(num.String(), 10, 64)
 	if perr != nil {
 		var zero T
 		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeInvalidType, Message: i18n.T(goskema.CodeInvalidType, nil), Cause: perr}}
 	}
-	if f64 < 0 {
-		var zero T
-		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeInvalidType, Message: "negative not allowed for unsigned"}}
-	}
-	if math.Trunc(f64) != f64 {
-		var zero T
-		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeInvalidType, Message: "fractional part not allowed for unsigned"}}
-	}
-	u := uint64(f64)
-	return T(u), nil
+	return T(u64), nil
 }
 
 func (s uintAsSchema[T]) ParseWithMeta(ctx context.Context, v any) (goskema.Decoded[T], error) {
@@ -573,16 +563,12 @@ func (s uintAsSchema[T]) ParseFromSource(ctx context.Context, src goskema.Source
 		var zero T
 		return zero, err
 	}
-	f64, perr := strconv.ParseFloat(num.String(), 64)
+	u64, perr := strconv.ParseUint(num.String(), 10, 64)
 	if perr != nil {
 		var zero T
 		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeInvalidType, Message: i18n.T(goskema.CodeInvalidType, nil), Cause: perr}}
 	}
-	if f64 < 0 || math.Trunc(f64) != f64 {
-		var zero T
-		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeInvalidType, Message: "invalid unsigned number"}}
-	}
-	return T(uint64(f64)), nil
+	return T(u64), nil
 }
 func (s uintAsSchema[T]) ParseFromSourceWithMeta(ctx context.Context, src goskema.Source, opt goskema.ParseOpt) (goskema.Decoded[T], error) {
 	v, err := s.ParseFromSource(ctx, src, opt)
@@ -718,16 +704,11 @@ func (s uint32AsSchema[T]) Parse(ctx context.Context, v any) (T, error) {
 		var zero T
 		return zero, err
 	}
-	f64, perr := strconv.ParseFloat(num.String(), 64)
+	u64, perr := strconv.ParseUint(num.String(), 10, 64)
 	if perr != nil {
 		var zero T
 		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeInvalidType, Message: i18n.T(goskema.CodeInvalidType, nil), Cause: perr}}
 	}
-	if f64 < 0 || math.Trunc(f64) != f64 {
-		var zero T
-		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeInvalidType, Message: "invalid uint32"}}
-	}
-	u64 := uint64(f64)
 	if u64 > math.MaxUint32 {
 		var zero T
 		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeOverflow, Message: "uint32 overflow"}}
@@ -751,16 +732,11 @@ func (s uint32AsSchema[T]) ParseFromSource(ctx context.Context, src goskema.Sour
 		var zero T
 		return zero, err
 	}
-	f64, perr := strconv.ParseFloat(num.String(), 64)
+	u64, perr := strconv.ParseUint(num.String(), 10, 64)
 	if perr != nil {
 		var zero T
 		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeInvalidType, Message: i18n.T(goskema.CodeInvalidType, nil), Cause: perr}}
 	}
-	if f64 < 0 || math.Trunc(f64) != f64 {
-		var zero T
-		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeInvalidType, Message: "invalid uint32"}}
-	}
-	u64 := uint64(f64)
 	if u64 > math.MaxUint32 {
 		var zero T
 		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeOverflow, Message: "uint32 overflow"}}
@@ -896,16 +872,11 @@ func (s uint16AsSchema[T]) Parse(ctx context.Context, v any) (T, error) {
 		var zero T
 		return zero, err
 	}
-	f64, perr := strconv.ParseFloat(num.String(), 64)
+	u64, perr := strconv.ParseUint(num.String(), 10, 64)
 	if perr != nil {
 		var zero T
 		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeInvalidType, Message: i18n.T(goskema.CodeInvalidType, nil), Cause: perr}}
 	}
-	if f64 < 0 || math.Trunc(f64) != f64 {
-		var zero T
-		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeInvalidType, Message: "invalid uint16"}}
-	}
-	u64 := uint64(f64)
 	if u64 > math.MaxUint16 {
 		var zero T
 		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeOverflow, Message: "uint16 overflow"}}
@@ -928,16 +899,11 @@ func (s uint16AsSchema[T]) ParseFromSource(ctx context.Context, src goskema.Sour
 		var zero T
 		return zero, err
 	}
-	f64, perr := strconv.ParseFloat(num.String(), 64)
+	u64, perr := strconv.ParseUint(num.String(), 10, 64)
 	if perr != nil {
 		var zero T
 		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeInvalidType, Message: i18n.T(goskema.CodeInvalidType, nil), Cause: perr}}
 	}
-	if f64 < 0 || math.Trunc(f64) != f64 {
-		var zero T
-		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeInvalidType, Message: "invalid uint16"}}
-	}
-	u64 := uint64(f64)
 	if u64 > math.MaxUint16 {
 		var zero T
 		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeOverflow, Message: "uint16 overflow"}}
@@ -1069,16 +1035,11 @@ func (s uint8AsSchema[T]) Parse(ctx context.Context, v any) (T, error) {
 		var zero T
 		return zero, err
 	}
-	f64, perr := strconv.ParseFloat(num.String(), 64)
+	u64, perr := strconv.ParseUint(num.String(), 10, 64)
 	if perr != nil {
 		var zero T
 		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeInvalidType, Message: i18n.T(goskema.CodeInvalidType, nil), Cause: perr}}
 	}
-	if f64 < 0 || math.Trunc(f64) != f64 {
-		var zero T
-		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeInvalidType, Message: "invalid uint8"}}
-	}
-	u64 := uint64(f64)
 	if u64 > math.MaxUint8 {
 		var zero T
 		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeOverflow, Message: "uint8 overflow"}}
@@ -1101,16 +1062,11 @@ func (s uint8AsSchema[T]) ParseFromSource(ctx context.Context, src goskema.Sourc
 		var zero T
 		return zero, err
 	}
-	f64, perr := strconv.ParseFloat(num.String(), 64)
+	u64, perr := strconv.ParseUint(num.String(), 10, 64)
 	if perr != nil {
 		var zero T
 		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeInvalidType, Message: i18n.T(goskema.CodeInvalidType, nil), Cause: perr}}
 	}
-	if f64 < 0 || math.Trunc(f64) != f64 {
-		var zero T
-		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeInvalidType, Message: "invalid uint8"}}
-	}
-	u64 := uint64(f64)
 	if u64 > math.MaxUint8 {
 		var zero T
 		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeOverflow, Message: "uint8 overflow"}}
