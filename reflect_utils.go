@@ -22,10 +22,16 @@ func ResolveStructKey(sf reflect.StructField) string {
 		if jt == "-" {
 			return "-"
 		}
+		// Extract the name before the first comma (options start there)
+		name := jt
 		if i := strings.IndexByte(jt, ','); i >= 0 {
-			return jt[:i]
+			name = jt[:i]
 		}
-		return jt
+		// Per encoding/json, an empty name means use the field's name
+		if name == "" {
+			return sf.Name
+		}
+		return name
 	}
 	return sf.Name
 }

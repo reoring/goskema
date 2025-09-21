@@ -14,7 +14,11 @@ import (
 func buildKeyPatternRefiner(fieldName string, pattern string) func(ctx context.Context, m map[string]any) error {
 	re, err := regexp.Compile(pattern)
 	if err != nil {
-		re = regexp.MustCompile(".*") // fallback to always-match; TODO: surface warning via Diag
+		// Fail closed: invalid regex must report an issue rather than accept everything
+		invalidErr := err
+		return func(ctx context.Context, m map[string]any) error {
+			return goskema.Issues{goskema.Issue{Path: "/" + fieldName, Code: goskema.CodePattern, Message: "invalid regex pattern", Cause: invalidErr}}
+		}
 	}
 	return func(ctx context.Context, m map[string]any) error {
 		v, ok := m[fieldName]
@@ -41,16 +45,22 @@ func buildKeyPatternRefiner(fieldName string, pattern string) func(ctx context.C
 
 // buildKeyPatternsRefiner enforces that all keys match at least one of the provided regex patterns.
 func buildKeyPatternsRefiner(fieldName string, patterns []string) func(ctx context.Context, m map[string]any) error {
-	// Precompile; invalid patterns fall back to ".*" to avoid panics, and we could warn via Diag upstream.
+	// Precompile; invalid patterns cause a single error at refine time
 	res := make([]*regexp.Regexp, 0, len(patterns))
+	var invalid error
 	for _, p := range patterns {
 		re, err := regexp.Compile(p)
 		if err != nil {
-			re = regexp.MustCompile(".*")
+			invalid = err
+			// keep going to collect other valid patterns but remember the error
+			continue
 		}
 		res = append(res, re)
 	}
 	return func(ctx context.Context, m map[string]any) error {
+		if invalid != nil {
+			return goskema.Issues{goskema.Issue{Path: "/" + fieldName, Code: goskema.CodePattern, Message: "invalid regex pattern", Cause: invalid}}
+		}
 		v, ok := m[fieldName]
 		if !ok || v == nil {
 			return nil
@@ -86,16 +96,21 @@ func buildKeyPatternsRefiner(fieldName string, patterns []string) func(ctx conte
 // If patternType is empty, values for matched keys are not type-checked.
 // If apType is empty, unmatched keys are not type-checked.
 func buildPatternPropertiesValueTypeRefiner(fieldName string, patterns []string, patternType string, apType string) func(ctx context.Context, m map[string]any) error {
-	// Precompile patterns; invalid ones degrade to ".*" to avoid panics.
+	// Precompile patterns; invalid ones are reported as an error
 	res := make([]*regexp.Regexp, 0, len(patterns))
+	var invalid error
 	for _, p := range patterns {
 		re, err := regexp.Compile(p)
 		if err != nil {
-			re = regexp.MustCompile(".*")
+			invalid = err
+			continue
 		}
 		res = append(res, re)
 	}
 	return func(ctx context.Context, m map[string]any) error {
+		if invalid != nil {
+			return goskema.Issues{goskema.Issue{Path: "/" + fieldName, Code: goskema.CodePattern, Message: "invalid regex pattern", Cause: invalid}}
+		}
 		v, ok := m[fieldName]
 		if !ok || v == nil {
 			return nil
@@ -139,20 +154,25 @@ func buildPatternPropertiesValueTypeRefiner(fieldName string, patterns []string,
 // patternToType maps regex pattern -> expected JSON type name ("string", "boolean",
 // "number", "integer", "object"). Empty type means no check for that pattern.
 func buildPatternPropertiesValueTypesRefiner(fieldName string, patternToType map[string]string, apType string) func(ctx context.Context, m map[string]any) error {
-	// Precompile regexps; invalid ones degrade to ".*".
+	// Precompile regexps; invalid ones produce an error
 	type compiled struct {
 		re  *regexp.Regexp
 		typ string
 	}
 	var cs []compiled
+	var invalid error
 	for p, t := range patternToType {
 		re, err := regexp.Compile(p)
 		if err != nil {
-			re = regexp.MustCompile(".*")
+			invalid = err
+			continue
 		}
 		cs = append(cs, compiled{re: re, typ: t})
 	}
 	return func(ctx context.Context, m map[string]any) error {
+		if invalid != nil {
+			return goskema.Issues{goskema.Issue{Path: "/" + fieldName, Code: goskema.CodePattern, Message: "invalid regex pattern", Cause: invalid}}
+		}
 		v, ok := m[fieldName]
 		if !ok || v == nil {
 			return nil
