@@ -9,9 +9,9 @@ import (
 type Presence uint8
 
 const (
-    PresenceSeen           Presence = 1 << iota // Field appeared in the input.
-    PresenceWasNull                             // Field value was null.
-    PresenceDefaultApplied                      // Default value was applied.
+	PresenceSeen           Presence = 1 << iota // Field appeared in the input.
+	PresenceWasNull                             // Field value was null.
+	PresenceDefaultApplied                      // Default value was applied.
 )
 
 // PresenceMap maps JSON Pointers to Presence flags.
@@ -19,8 +19,8 @@ type PresenceMap map[string]Presence
 
 // Decoded carries the parsed value along with presence metadata.
 type Decoded[T any] struct {
-    Value    T
-    Presence PresenceMap
+	Value    T
+	Presence PresenceMap
 }
 
 // simple string interner for PresenceMap keys
