@@ -34,13 +34,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Install golangci-lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: latest
+      - name: Format check (gofmt)
+        run: make fmtcheck
 
-      - name: Run golangci-lint
-        run: golangci-lint run
+      - name: Vet
+        run: make vet
 
   build-test:
     name: Build & Test
