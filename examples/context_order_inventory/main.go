@@ -87,28 +87,14 @@ func (inv *memInventory) Release(ctx context.Context, sku string, qty int) error
 func orderSchema() goskema.Schema[Order] {
 	item := g.ObjectOf[OrderItem]().
 		Field("sku", g.StringOf[string]()).Required().
-		Field("qty", g.IntOf[int]()).Required().
+		Field("qty", g.IntOf[int]().Min(1)).Required().
 		UnknownStrict().
 		MustBind()
 
 	return g.ObjectOf[Order]().
 		Field("items", g.ArrayOfSchema(g.Array(item).Min(1))).Required().
 		UnknownStrict().
-		// Domain: qty must be positive (wire-level numeric Min is not available yet)
-		RefineT("qty_positive", func(dc goskema.DomainCtx[Order], o Order) []goskema.Issue {
-			if !dc.AnySeen(fieldOrderItems) {
-				return nil
-			}
-			keyQty := goskema.FieldNameOf(func(oi *OrderItem) *int { return &oi.Qty })
-			var out []goskema.Issue
-			rItems := dc.Path(fieldOrderItems)
-			for i, it := range o.Items {
-				if it.Qty <= 0 {
-					out = append(out, rItems.Index(i).Field(keyQty).Issue(goskema.CodeDomainRange, "quantity must be positive", "min", 1))
-				}
-			}
-			return out
-		}).
+		// Domain: qty positive is now enforced at wire-level via Min(1)
 		// Domain: SKU uniqueness across items
 		RefineT("sku_unique", func(dc goskema.DomainCtx[Order], o Order) []goskema.Issue {
 			if !dc.AnySeen(fieldOrderItems) {

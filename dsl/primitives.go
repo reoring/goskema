@@ -627,12 +627,12 @@ func (s int32AsSchema[T]) Parse(ctx context.Context, v any) (T, error) {
 	}
 	if math.Trunc(f64) != f64 {
 		var zero T
-		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeInvalidType, Message: "fractional part not allowed for int32"}}
+		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeInvalidType, Message: i18n.T(goskema.CodeInvalidType, nil), Params: map[string]any{"reason": "fractional_not_allowed_int32"}}}
 	}
 	i64 := int64(f64)
 	if i64 < math.MinInt32 || i64 > math.MaxInt32 {
 		var zero T
-		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeOverflow, Message: "int32 overflow"}}
+		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeOverflow, Message: i18n.T(goskema.CodeOverflow, nil)}}
 	}
 	return T(int32(i64)), nil
 }
@@ -656,7 +656,7 @@ func (s int32AsSchema[T]) ParseFromSource(ctx context.Context, src goskema.Sourc
 	if i64, perr := strconv.ParseInt(num.String(), 10, 64); perr == nil {
 		if i64 < math.MinInt32 || i64 > math.MaxInt32 {
 			var zero T
-			return zero, goskema.Issues{{Path: "/", Code: goskema.CodeOverflow, Message: "int32 overflow"}}
+			return zero, goskema.Issues{{Path: "/", Code: goskema.CodeOverflow, Message: i18n.T(goskema.CodeOverflow, nil)}}
 		}
 		return T(int32(i64)), nil
 	}
@@ -797,12 +797,12 @@ func (s int16AsSchema[T]) Parse(ctx context.Context, v any) (T, error) {
 	}
 	if math.Trunc(f64) != f64 {
 		var zero T
-		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeInvalidType, Message: "fractional part not allowed for int16"}}
+		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeInvalidType, Message: i18n.T(goskema.CodeInvalidType, nil), Params: map[string]any{"reason": "fractional_not_allowed_int16"}}}
 	}
 	i64 := int64(f64)
 	if i64 < math.MinInt16 || i64 > math.MaxInt16 {
 		var zero T
-		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeOverflow, Message: "int16 overflow"}}
+		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeOverflow, Message: i18n.T(goskema.CodeOverflow, nil)}}
 	}
 	return T(int16(i64)), nil
 }
@@ -825,7 +825,7 @@ func (s int16AsSchema[T]) ParseFromSource(ctx context.Context, src goskema.Sourc
 	if i64, perr := strconv.ParseInt(num.String(), 10, 64); perr == nil {
 		if i64 < math.MinInt16 || i64 > math.MaxInt16 {
 			var zero T
-			return zero, goskema.Issues{{Path: "/", Code: goskema.CodeOverflow, Message: "int16 overflow"}}
+			return zero, goskema.Issues{{Path: "/", Code: goskema.CodeOverflow, Message: i18n.T(goskema.CodeOverflow, nil)}}
 		}
 		return T(int16(i64)), nil
 	}
@@ -964,12 +964,12 @@ func (s int8AsSchema[T]) Parse(ctx context.Context, v any) (T, error) {
 	}
 	if math.Trunc(f64) != f64 {
 		var zero T
-		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeInvalidType, Message: "fractional part not allowed for int8"}}
+		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeInvalidType, Message: i18n.T(goskema.CodeInvalidType, nil), Params: map[string]any{"reason": "fractional_not_allowed_int8"}}}
 	}
 	i64 := int64(f64)
 	if i64 < math.MinInt8 || i64 > math.MaxInt8 {
 		var zero T
-		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeOverflow, Message: "int8 overflow"}}
+		return zero, goskema.Issues{{Path: "/", Code: goskema.CodeOverflow, Message: i18n.T(goskema.CodeOverflow, nil)}}
 	}
 	return T(int8(i64)), nil
 }
@@ -992,7 +992,7 @@ func (s int8AsSchema[T]) ParseFromSource(ctx context.Context, src goskema.Source
 	if i64, perr := strconv.ParseInt(num.String(), 10, 64); perr == nil {
 		if i64 < math.MinInt8 || i64 > math.MaxInt8 {
 			var zero T
-			return zero, goskema.Issues{{Path: "/", Code: goskema.CodeOverflow, Message: "int8 overflow"}}
+			return zero, goskema.Issues{{Path: "/", Code: goskema.CodeOverflow, Message: i18n.T(goskema.CodeOverflow, nil)}}
 		}
 		return T(int8(i64)), nil
 	}

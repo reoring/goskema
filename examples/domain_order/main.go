@@ -29,8 +29,8 @@ var (
 func orderSchema() goskema.Schema[Order] {
 	item := g.ObjectOf[OrderItem]().
 		Field("sku", g.StringOf[string]()).Required().
-		Field("qty", g.IntOf[int]()).Required().
-		Field("price", g.IntOf[int]()).Required().
+		Field("qty", g.IntOf[int]().Min(1)).Required().
+		Field("price", g.IntOf[int]().Min(0)).Required().
 		UnknownStrict().
 		MustBind()
 

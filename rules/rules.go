@@ -87,9 +87,7 @@ func AtLeastOne[T any](collectionPath string) func(goskema.DomainCtx[T], T) []go
 		switch rv.Kind() {
 		case reflect.Slice, reflect.Array:
 			if rv.Len() == 0 {
-				return []goskema.Issue{
-					d.Ref.At(p).Issue(goskema.CodeAggregateViolation, "at least 1 item is required", "min", 1),
-				}
+				return []goskema.Issue{d.Ref.At(p).Issue(goskema.CodeTooShort, "at least 1 item is required", "minItems", 1)}
 			}
 		default:
 			// Not a collection; do not issue error here to avoid noise
@@ -101,6 +99,8 @@ func AtLeastOne[T any](collectionPath string) func(goskema.DomainCtx[T], T) []go
 // UniqueBy ensures elements in a collection have unique key values.
 // collectionPath is JSON Pointer to a slice field (e.g., "/items").
 // keyPath is a relative path inside each element (e.g., "sku" or "/sku").
+// Note: Prefer a stable, comparable key type (e.g., string). Mixed-type keys may stringify
+// to identical values and cause false positives. Align schema so the key is a single type.
 func UniqueBy[T any](collectionPath, keyPath string) func(goskema.DomainCtx[T], T) []goskema.Issue {
 	cp := normalizePath(collectionPath)
 	kp := strings.TrimPrefix(keyPath, "/")
@@ -224,8 +224,6 @@ func valueAtPathWithin(v any, rel string) (any, bool) {
 			cur = mv
 		case reflect.Slice, reflect.Array:
 			// For collection, seg should be an index
-			// Attempt to parse integer index; if not an integer, treat as field of element (unsupported here)
-			// Stop and fail if non-integer
 			idx, ok := tryParseInt(seg)
 			if !ok {
 				return nil, false

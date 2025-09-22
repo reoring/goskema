@@ -97,3 +97,46 @@ func TestNumberJSONSchema_CoerceFromString(t *testing.T) {
 		t.Fatalf("TypeCheck should accept string when coerce enabled: %v", err)
 	}
 }
+
+func TestIntOf_Min_JSONSchemaAndRuntime(t *testing.T) {
+	ctx := context.Background()
+	s := g.IntOf[int]().Min(1)
+
+	obj := g.Object().
+		Field("qty", s).
+		Require("qty").
+		UnknownStrict().
+		MustBuild()
+
+	// runtime: qty=0 should fail
+	if _, err := goskema.ParseFrom(ctx, obj, goskema.JSONBytes([]byte(`{"qty":0}`))); err == nil {
+		t.Fatalf("expected error for qty<1")
+	} else if iss, ok := goskema.AsIssues(err); ok {
+		if len(iss) == 0 || iss[0].Code != goskema.CodeTooSmall {
+			t.Fatalf("expected too_small, got %v", iss)
+		}
+	} else {
+		t.Fatalf("expected Issues error, got %v", err)
+	}
+
+	// ok: qty=2
+	if _, err := goskema.ParseFrom(ctx, obj, goskema.JSONBytes([]byte(`{"qty":2}`))); err != nil {
+		t.Fatalf("unexpected err for qty>=1: %v", err)
+	}
+
+	// JSON Schema export includes minimum
+	sch, err := obj.JSONSchema()
+	if err != nil {
+		t.Fatalf("json schema err: %v", err)
+	}
+	ps, ok := sch.Properties["qty"]
+	if !ok || ps == nil {
+		t.Fatalf("qty property missing in schema")
+	}
+	if ps.Minimum == nil || *ps.Minimum != 1 {
+		t.Fatalf("expected minimum=1, got %#v", ps)
+	}
+	if ps.Type != "integer" && ps.Type != "number" {
+		t.Fatalf("expected numeric type, got %s", ps.Type)
+	}
+}

@@ -2,8 +2,12 @@ package dsl
 
 import (
 	"context"
+	"encoding/json"
+	"reflect"
+	"strconv"
 
 	goskema "github.com/reoring/goskema"
+	"github.com/reoring/goskema/i18n"
 	js "github.com/reoring/goskema/jsonschema"
 )
 
@@ -96,3 +100,195 @@ func Nullable(ad AnyAdapter) AnyAdapter {
 
 // Nullable enables fluent chaining: g.StringOf[T]().Nullable()
 func (ad AnyAdapter) Nullable() AnyAdapter { return Nullable(ad) }
+
+// Min sets a numeric minimum (inclusive) constraint at runtime and in JSON Schema.
+// Non-numeric values are ignored by this guard (type errors are handled elsewhere).
+func (ad AnyAdapter) Min(n float64) AnyAdapter {
+	prevParse := ad.parse
+	prevValidate := ad.validateValue
+	prevJSON := ad.jsonSchema
+	prevSrc := ad.parseFromSource
+	out := ad
+	out.parse = func(ctx context.Context, v any) (any, error) {
+		if prevParse != nil {
+			val, err := prevParse(ctx, v)
+			if err != nil {
+				return nil, err
+			}
+			if err := minCheck(val, n); err != nil {
+				return nil, err
+			}
+			return val, nil
+		}
+		if err := minCheck(v, n); err != nil {
+			return nil, err
+		}
+		return v, nil
+	}
+	out.validateValue = func(ctx context.Context, v any) error {
+		if prevValidate != nil {
+			if err := prevValidate(ctx, v); err != nil {
+				return err
+			}
+		}
+		return minCheck(v, n)
+	}
+	out.jsonSchema = func() (*js.Schema, error) {
+		s := &js.Schema{}
+		if prevJSON != nil {
+			ps, err := prevJSON()
+			if err != nil {
+				return nil, err
+			}
+			if ps != nil {
+				s = ps
+			}
+		}
+		s.Minimum = jsPtrFloat(n)
+		if s.Type == "" {
+			s.Type = "number"
+		}
+		return s, nil
+	}
+	if prevSrc != nil {
+		out.parseFromSource = func(ctx context.Context, src goskema.Source, opt goskema.ParseOpt) (any, error) {
+			val, err := prevSrc(ctx, src, opt)
+			if err != nil {
+				return nil, err
+			}
+			if err := minCheck(val, n); err != nil {
+				return nil, err
+			}
+			return val, nil
+		}
+	}
+	return out
+}
+
+// Max sets a numeric maximum (inclusive) constraint at runtime and in JSON Schema.
+func (ad AnyAdapter) Max(n float64) AnyAdapter {
+	prevParse := ad.parse
+	prevValidate := ad.validateValue
+	prevJSON := ad.jsonSchema
+	prevSrc := ad.parseFromSource
+	out := ad
+	out.parse = func(ctx context.Context, v any) (any, error) {
+		if prevParse != nil {
+			val, err := prevParse(ctx, v)
+			if err != nil {
+				return nil, err
+			}
+			if err := maxCheck(val, n); err != nil {
+				return nil, err
+			}
+			return val, nil
+		}
+		if err := maxCheck(v, n); err != nil {
+			return nil, err
+		}
+		return v, nil
+	}
+	out.validateValue = func(ctx context.Context, v any) error {
+		if prevValidate != nil {
+			if err := prevValidate(ctx, v); err != nil {
+				return err
+			}
+		}
+		return maxCheck(v, n)
+	}
+	out.jsonSchema = func() (*js.Schema, error) {
+		s := &js.Schema{}
+		if prevJSON != nil {
+			ps, err := prevJSON()
+			if err != nil {
+				return nil, err
+			}
+			if ps != nil {
+				s = ps
+			}
+		}
+		s.Maximum = jsPtrFloat(n)
+		if s.Type == "" {
+			s.Type = "number"
+		}
+		return s, nil
+	}
+	if prevSrc != nil {
+		out.parseFromSource = func(ctx context.Context, src goskema.Source, opt goskema.ParseOpt) (any, error) {
+			val, err := prevSrc(ctx, src, opt)
+			if err != nil {
+				return nil, err
+			}
+			if err := maxCheck(val, n); err != nil {
+				return nil, err
+			}
+			return val, nil
+		}
+	}
+	return out
+}
+
+// ---- helpers ----
+func jsPtrFloat(v float64) *float64 { return &v }
+
+func minCheck(v any, min float64) error {
+	if v == nil {
+		return nil
+	}
+	switch n := v.(type) {
+	case int:
+		if float64(n) < min {
+			return goskema.Issues{goskema.Issue{Path: "/", Code: goskema.CodeTooSmall, Message: i18n.T(goskema.CodeTooSmall, nil)}}
+		}
+	case int8, int16, int32, int64:
+		if reflect.ValueOf(n).Int() < int64(min) {
+			return goskema.Issues{goskema.Issue{Path: "/", Code: goskema.CodeTooSmall, Message: i18n.T(goskema.CodeTooSmall, nil)}}
+		}
+	case uint, uint8, uint16, uint32, uint64:
+		if float64(reflect.ValueOf(n).Uint()) < min {
+			return goskema.Issues{goskema.Issue{Path: "/", Code: goskema.CodeTooSmall, Message: i18n.T(goskema.CodeTooSmall, nil)}}
+		}
+	case float32, float64:
+		if reflect.ValueOf(n).Convert(reflect.TypeOf(float64(0))).Float() < min {
+			return goskema.Issues{goskema.Issue{Path: "/", Code: goskema.CodeTooSmall, Message: i18n.T(goskema.CodeTooSmall, nil)}}
+		}
+	case json.Number:
+		if f, err := strconv.ParseFloat(string(n), 64); err == nil {
+			if f < min {
+				return goskema.Issues{goskema.Issue{Path: "/", Code: goskema.CodeTooSmall, Message: i18n.T(goskema.CodeTooSmall, nil)}}
+			}
+		}
+	}
+	return nil
+}
+
+func maxCheck(v any, max float64) error {
+	if v == nil {
+		return nil
+	}
+	switch n := v.(type) {
+	case int:
+		if float64(n) > max {
+			return goskema.Issues{goskema.Issue{Path: "/", Code: goskema.CodeTooBig, Message: i18n.T(goskema.CodeTooBig, nil)}}
+		}
+	case int8, int16, int32, int64:
+		if reflect.ValueOf(n).Int() > int64(max) {
+			return goskema.Issues{goskema.Issue{Path: "/", Code: goskema.CodeTooBig, Message: i18n.T(goskema.CodeTooBig, nil)}}
+		}
+	case uint, uint8, uint16, uint32, uint64:
+		if float64(reflect.ValueOf(n).Uint()) > max {
+			return goskema.Issues{goskema.Issue{Path: "/", Code: goskema.CodeTooBig, Message: i18n.T(goskema.CodeTooBig, nil)}}
+		}
+	case float32, float64:
+		if reflect.ValueOf(n).Convert(reflect.TypeOf(float64(0))).Float() > max {
+			return goskema.Issues{goskema.Issue{Path: "/", Code: goskema.CodeTooBig, Message: i18n.T(goskema.CodeTooBig, nil)}}
+		}
+	case json.Number:
+		if f, err := strconv.ParseFloat(string(n), 64); err == nil {
+			if f > max {
+				return goskema.Issues{goskema.Issue{Path: "/", Code: goskema.CodeTooBig, Message: i18n.T(goskema.CodeTooBig, nil)}}
+			}
+		}
+	}
+	return nil
+}

@@ -7,6 +7,9 @@ type Schema struct {
 	Type    string `json:"type,omitempty"`
 	Format  string `json:"format,omitempty"`
 	Default any    `json:"default,omitempty"`
+	// Number
+	Minimum *float64 `json:"minimum,omitempty"`
+	Maximum *float64 `json:"maximum,omitempty"`
 
 	// Object
 	Properties           map[string]*Schema `json:"properties,omitempty"`

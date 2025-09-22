@@ -10,7 +10,8 @@
 //
 // Entry points
 //   - Object(): create an object builder; chain Field/Required/Unknown* then MustBuild()/Build.
-//   - ObjectOf[T](): typed builder; at the end call MustBind()/Bind[T] to construct Schema[T].
+//   - ObjectOf[T](): typed builder; prefer Field(...).Required() for single fields,
+//     or builder-level Require("a","b") for multiple; then MustBind()/Bind[T] to construct Schema[T].
 //   - Array(elem): build an array schema from an element schema (Min/Max, streaming-ready).
 //   - Map(elem)/MapAny(): a map with a value schema, or a sparse passthrough map.
 //   - SchemaOf[T](s): adapter from Schema[T] to AnyAdapter (to pass into Field).

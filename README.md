@@ -1,5 +1,7 @@
 # Goskema
 
+Language: [English](README.md) | [日本語](README.ja.md)
+
 High-performance, type-safe schema/codec foundation for Go. It addresses Zod's real-world pain points (unknown/duplicate/presence handling, huge inputs, machine-readable errors, contract distribution) and optimizes them for practical use in Go.
 
 * Centers on Schema ↔ Codec to unify wire (JSON, etc.) ↔ domain (Go types) with consistent semantics
@@ -28,6 +30,7 @@ You can get something working with the standard library, but as requirements gro
 * [Using with encoding/json / validator](#using-with-encodingjson--validator)
 * [JSON Schema export / OpenAPI import](#json-schema-export--openapi-import)
 * [Webhook examples (HTTP / Kubernetes)](#webhook-examples-http--kubernetes)
+* [Install](#install)
 * [Quick start](#quick-start)
 * [Streaming (safe for huge arrays)](#streaming-safe-for-huge-arrays)
 * [Enforcement (duplicate keys, depth, size limits)](#enforcement-duplicate-keys-depth-size-limits)
@@ -241,6 +244,19 @@ Kubernetes integration details (unknown/list-type/int-or-string, etc.) are in `d
 
 ---
 
+## Install
+
+```bash
+go get github.com/reoring/goskema
+```
+
+```bash
+# Using v0 series (recommended while semantics are being refined)
+go get github.com/reoring/goskema@v0
+```
+
+---
+
 ## Quick start
 
 ```go
@@ -326,6 +342,14 @@ _, err := goskema.StreamParse(ctx, someArraySchema, r, opt)
 _ = err
 ```
 
+Recommended starting points (boundary endpoints):
+
+- MaxDepth: 16
+- MaxBytes: 1–5 MiB depending on endpoint risk profile
+- FailFast: true for synchronous APIs (collect for batch/offline)
+
+Tune per endpoint and monitor rejections via Issue codes and paths.
+
 ---
 
 ## WithMeta / Presence (distinguishing missing/null/default)
@@ -350,6 +374,8 @@ if dm.Presence["/nickname"]&goskema.PresenceDefaultApplied != 0 {
 * `EncodePreservingObject/Array` reproduces missing/null/default
 
 Note: `EncodePreserve` requires presence metadata. Calling `EncodeWithMode(..., EncodePreserve)` without presence returns `ErrEncodePreserveRequiresPresence`.
+
+Tip: In Quick start, if you plan to use Preserve encoding later, parse with meta upfront using `ParseFromWithMeta` to carry presence bits.
 
 ---
 
@@ -404,6 +430,15 @@ func init() {
 
 Return to default with `goskema.UseDefaultJSONDriver()`.
 
+Driver selection at a glance:
+
+| Scenario | Driver | How to set |
+| :-- | :-- | :-- |
+| Default (no special import/flags) | encoding/json | nothing to do |
+| Side-effect import | go-json | `import _ "github.com/reoring/goskema/source"` (sets go-json at init) |
+| Build tag | go-json | `-tags gojson` (optionally also call `SetJSONDriver`) |
+| Build tag + experiment | encoding/json/v2 | `GOEXPERIMENT=jsonv2 -tags jsonv2` and `SetJSONDriver(jsonv2.Driver())` |
+
 JSON Schema alignment (UnknownStrip):
 
 * UnknownStrip at runtime means "accept unknown keys, drop them during projection"
@@ -423,7 +458,90 @@ user := g.ObjectOf[User]().
   MustBind()
 ```
 
+Numeric constraints (wire-level):
+
+```go
+order := g.Object().
+  Field("qty",   g.IntOf[int]().Min(1)).Required().
+  Field("price", g.IntOf[int]().Min(0)).Required().
+  UnknownStrict().
+  MustBuild()
+```
+
+Note: For complex business constraints (cross-field validation / external dependencies), use `RefineT/RefineCtx(E)` as needed.
+
 See `docs/dsl.md` for details.
+
+---
+
+### Discriminated union (OneOf with discriminator)
+
+```go
+type Cat struct{ Kind string `json:"kind"`; Lives int `json:"lives"` }
+type Dog struct{ Kind string `json:"kind"`; Breed string `json:"breed"` }
+
+cat := g.Object().
+  Field("kind", g.StringOf[string]()).Required().
+  Field("lives", g.IntOf[int]().Min(1)).Required().
+  UnknownStrict().
+  MustBuild()
+
+dog := g.Object().
+  Field("kind", g.StringOf[string]()).Required().
+  Field("breed", g.StringOf[string]()).Required().
+  UnknownStrict().
+  MustBuild()
+
+pet := g.Object().
+  Discriminator("kind").
+  OneOf(
+    g.Variant("cat", cat),
+    g.Variant("dog", dog),
+  ).
+  MustBuild()
+```
+
+---
+
+## Domain vs Context rules
+
+- Domain rules (`RefineT`): pure, no external I/O; for cross-field checks, ranges, and uniqueness.
+- Context rules (`RefineCtx` / `RefineCtxE`): allow external dependencies (DB/API). Inject with `WithService`, access via `RequireService`.
+- Presence-safe gating: execute only when relevant fields were present using `AnySeen(FieldOf(...))`.
+
+Minimal example:
+
+```go
+type Item struct{ SKU string `json:"sku"` }
+type Order struct{
+  Status string  `json:"status"`
+  Items  []Item  `json:"items"`
+}
+var fieldStatus = goskema.FieldOf[Order](func(o *Order) *string { return &o.Status })
+var fieldItems  = goskema.FieldOf[Order](func(o *Order) *[]Item  { return &o.Items })
+
+s := g.ObjectOf[Order]().
+  Field("status", g.StringOf[string]()).Required().
+  Field("items",  g.ArrayOf(g.ObjectOf[Item]().Field("sku", g.StringOf[string]()).Required().MustBind())).Required().
+  UnknownStrict().
+  // Domain: unless QUOTE, require at least one item
+  RefineT("items_required_unless_quote", func(dc goskema.DomainCtx[Order], o Order) []goskema.Issue {
+    if !dc.AnySeen(fieldStatus, fieldItems) { return nil }
+    if o.Status != "QUOTE" && len(o.Items) == 0 {
+      return []goskema.Issue{dc.Path(fieldItems).Issue(goskema.CodeTooShort, "at least 1 item is required", "minItems", 1)}
+    }
+    return nil
+  }).
+  // Context: checking via injected service
+  RefineCtxE("sku_exists", func(dc goskema.DomainCtx[Order], o Order) ([]goskema.Issue, error) {
+    if !dc.AnySeen(fieldItems) { return nil, nil }
+    cat, err := goskema.RequireService[Catalog](dc.Ctx)
+    if err != nil { return nil, fmt.Errorf("catalog service unavailable") }
+    // ... build Issues per item using dc.Path(fieldItems)
+    return nil, nil
+  }).
+  MustBind()
+```
 
 ---
 
@@ -572,6 +690,11 @@ Minimal JSON example:
 
 * Fail-fast with `ParseOpt{FailFast:true}`; default is collect (aggregate multiple)
 * Error order is stable (object keys in ascending order; arrays by index)
+* Mapping suggestion:
+  - 400 Bad Request: `invalid_type`, `required`, `unknown_key`, `duplicate_key`, `too_*`, `invalid_*`, `pattern`, `union_*`
+  - 422 Unprocessable Entity (domain): `domain_range`, `aggregate_violation`, `uniqueness`, `business_rule`, `conflict`
+  - 503 Service Unavailable (dependency): `dependency_unavailable`
+* Use `Issue.Params` to surface structured context to UI/observability (e.g., `minItems`, `available`, `requested`)
 * See `docs/error-model.md`, sample `examples/error-model/main.go`, and test `api_error_model_test.go`
 
 ---

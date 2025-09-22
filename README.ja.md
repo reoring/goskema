@@ -1,5 +1,7 @@
 # Goskema
 
+言語: [English](README.md) | [日本語](README.ja.md)
+
 高速・型安全なスキーマ/コーデック基盤（Go）。**Zod の実運用上の痛点**（unknown/duplicate/presence/巨大入力/機械可読エラー/契約配布など）を **Go 向けに実務最適化**して解決します。
 
 * **Schema ↔ Codec** を中核に、**wire（JSON 等）↔ domain（Go 型）** を一貫した意味論で統合
@@ -441,6 +443,16 @@ user := g.ObjectOf[User]().
   Field("email", g.StringOf[string]()).Required().
   UnknownStrict().
   MustBind()
+```
+
+数値制約（wire レベル）:
+
+```go
+order := g.Object().
+  Field("qty",   g.IntOf[int]().Min(1)).Required().
+  Field("price", g.IntOf[int]().Min(0)).Required().
+  UnknownStrict().
+  MustBuild()
 ```
 
 詳細は `docs/dsl.md` へ。
